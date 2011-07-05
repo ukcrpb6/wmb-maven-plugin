@@ -1,0 +1,17 @@
+<component-set>
+	<components>
+		<component>
+			<role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+			<role-hint>bar</role-hint>
+			<implementation>
+				org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+			</implementation>
+			<configuration>
+				<phases>
+					<package>com.pressassociation.maven:wmb-maven-plugin:package</package>
+					<deploy>com.pressassociation.maven:wmb-maven-plugin:deploy</deploy>
+				</phases>
+			</configuration>
+		</component>
+	</components>
+</component-set>

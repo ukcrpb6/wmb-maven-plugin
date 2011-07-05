@@ -1,0 +1,27 @@
+<lifecycles>
+	<lifecycle>
+		<id>bar</id>
+		<phases>
+			<phase>
+				<id>package</id>
+				<executions>
+					<execution>
+						<goals>
+							<goal>package</goal>
+						</goals>
+					</execution>
+				</executions>
+			</phase>
+			<phase>
+				<id>deploy</id>
+				<executions>
+					<execution>
+						<goals>
+							<goal>deploy</goal>
+						</goals>
+					</execution>
+				</executions>
+			</phase>
+		</phases>
+	</lifecycle>
+</lifecycles>

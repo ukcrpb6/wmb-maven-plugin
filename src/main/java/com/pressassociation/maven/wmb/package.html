@@ -1,0 +1,35 @@
+<html>
+<head></head>
+<body>
+<p>
+This package contains the classes that make up the Websphere Message Broker (WMB)
+Maven plugin. This plugin creates a new Maven package type/lifecycle called 'bar'.
+The bar lifecycle covers three Maven lifecycle phases - package, install and deploy.
+</p>
+<h3>Package</h3>
+<p>
+The package phase uses the configuration from the POM file to create one or more
+invocations of the IBM <b>mqsicreatebar</b> utility. This can be configured three ways:
+<ul>
+<li>Single - creates a single BAR file containing all specified artifacts and projects.</li>
+<li>Individual - creates a BAR file for each specified artifact and the dependent projects.</li>
+<li>Barfile - uses a custom 'barfiles' configuration block to generate a custom barfile
+containing one or more flows and their dependent projects.</li>
+</ul>
+This combination of package options allows for maximum flexibility in the way that
+message flows are packaged for deployment to the Message Broker.
+</p>
+<h3>Install</h3>
+<p>The install phase generates a POM for all the BAR files it finds in the standard
+Maven 'target' directory and installs them into the specified repository.
+</p>
+<h3>Deploy</h3>
+<p>The deploy phase generates one or more invocations of the IBM <b>mqsideploy</b>
+utility to deploy the current set of BAR files to the specified Message Broker instance.
+</p>
+<h4>N.B.</h4>
+<p>This package description is created using the deprecated 'package.html' file, rather than the
+more modern 'package-info.java'. This is because the Maven plugin compiler currently chokes on
+'package-info.java' and breaks the build.</p>
+</body>
+</html> 
