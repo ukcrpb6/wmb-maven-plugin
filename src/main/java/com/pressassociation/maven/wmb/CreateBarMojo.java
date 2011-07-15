@@ -3,14 +3,14 @@
  */
 package com.pressassociation.maven.wmb;
 
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 
 /**
  * Maven mojo class to create a Websphere Message Broker (WMB) BAR file.
@@ -19,65 +19,43 @@ import org.apache.maven.plugin.MojoFailureException;
  * <table>
  * <tr><td>'single'</td><td>builds a single BAR file containing all specified artifacts.</td></tr>
  * <tr><td>'individual'&nbsp;</td><td>builds a BAR file for each artifact.</td></tr>
- * <tr><td>'barfile'</td><td>builds a set of custom BAR files as defined using the 'barfiles' configuration element.</td></tr>
+ * <tr><td>'barfile'</td><td>builds a set of custom BAR files as defined using the 'bars' configuration element.</td></tr>
  * </table>
  *
  * @author Simon Beaver
+ * @author Bob Browning
  * @version 1.0
  * 
  * @goal package
  * @phase package
  */
-public class CreateBarMojo extends AbstractMojo {
+public final class CreateBarMojo extends AbstractBarMojo {
 
-	/**
+    /*
+     * Message flow file extension
+     */
+    private static final String EXT_MSGFLOW = ".msgflow";
+
+    /**
 	 * Full path to mqsicreatebar command.
-	 * @parameter
+	 * @parameter default-value="/opt/IBM/WMBT700" expression="${wmb.toolkitDirectory}"
 	 */
-	String mqsicreatebar = "/opt/IBM/WMBT700/mqsicreatebar";
+	private File toolkitDirectory;
 
-	/**
-	 * Compilation mode.
-	 * @parameter
-	 */
-	private String mode;
+    private File _mqsicreatebar;
 
-	/**
-	 * List of BAR files to build.
-	 * @parameter
-	 */
-	private Barfile[] barfiles;
-
-	/**
-	 * File name for single BAR file.
-	 * @parameter
-	 */
-	private String filename;
-
-	/**
-	 * List of artifacts to build.
-	 * @parameter
-	 */
-	private String[] artifacts;
-
-	/**
-	 * List of dependent projects for artifacts.
-	 * @parameter
-	 */
-	private String[] projects;
-
-	/**
-	 * Base directory.
-	 * @parameter expression="${basedir}"
-	 */
-	private String basedir;
-
-	/**
-	 * Target directory for build output.
-	 * @parameter expression="${project.build.directory}"
-	 */
-	private String targetdir;
-	
+    private File getMQSICreateBar() throws MojoExecutionException {
+        if(_mqsicreatebar == null) {
+            _mqsicreatebar = new File(toolkitDirectory, "mqsicreatebar");
+            if(!_mqsicreatebar.exists()) {
+                throw new MojoExecutionException(String.format("Invalid toolkit directory (%s), cannot locate mqsicreatebar.", toolkitDirectory));
+            }
+            if(!_mqsicreatebar.canExecute()) {
+                throw new MojoExecutionException("Permission denied, cannot execute mqsicreatebar.");
+            }
+        }
+        return _mqsicreatebar;
+    }
 
 	/**
 	 * Standard Maven mojo method for running plugin classes. This examines the
@@ -85,77 +63,31 @@ public class CreateBarMojo extends AbstractMojo {
 	 * configuration accordingly.
 	 */
 	public void execute() throws MojoExecutionException, MojoFailureException {
-
-		if (mqsicreatebar == null || mqsicreatebar.equals("")) {
-			throw new MojoFailureException("Location of 'mqsicreatebar' not specified.");
-		}
-
-		File cmdcheck = new File(mqsicreatebar);
-		if(!cmdcheck.exists()) {
-			throw new MojoFailureException("'mqsicreatebar' is not at the specified location.");
-		}
-
-		if (mode.equals("single")) {
-			processSingle();
-		} else if (mode.equals("individual")) {
-			processIndividual();
-		} else if (mode.equals("barfile")) {
-			processBarfiles();
-		} else {
-			throw new MojoFailureException("Missing or invalid mode specified.");
-		}
+        processBarArtifacts();
 	}
 
 	/**
-	 * Build a single BAR file using all specified artifacts and dependencies.
-	 * @throws MojoFailureException 
-	 * @throws MojoExecutionException 
-	 */
-	public void processSingle() throws MojoFailureException, MojoExecutionException {
-		if (filename == null || filename.equals("")) {
-			throw new MojoFailureException("Missing BAR file name. Add a <filename>VALUE</filename> element to the configuration.");
-		}
-
-		if (artifacts == null || artifacts.length == 0) {
-			throw new MojoFailureException("No artifacts specified.");
-		}
-
-		process(filename, artifacts, projects);
-	}
-
-	/**
-	 * Build a BAR file for each specified artifact containing that artifact
-	 * plus all specified dependencies.
-	 * @throws MojoFailureException
-	 * @throws MojoExecutionException 
-	 */
-	public void processIndividual() throws MojoFailureException, MojoExecutionException {
-		if (artifacts == null || artifacts.length == 0) {
-			throw new MojoFailureException("No artifacts specified.");
-		}
-
-		for (String artifact : artifacts) {
-
-			String barname = (artifact.substring((artifact.lastIndexOf("/") + 1), artifact.lastIndexOf(".")) + ".bar");
-			process(barname, new String[] {artifact}, projects);
-		}
-		
-	}
-
-	/**
-	 * Builds one or more BAR files specified using the 'barfiles' configuration element.
+	 * Builds one or more BAR files specified using the 'bars' configuration element.
 	 * This allows customised sets of artifacts and their dependencies to be built for a
 	 * single project.
 	 * @throws MojoExecutionException
 	 * @throws MojoFailureException
 	 */
-	public void processBarfiles() throws MojoExecutionException, MojoFailureException {
-		if(barfiles == null || barfiles.length == 0) {
-			throw new MojoFailureException("'barfile' mode specified, but no BAR file definitions found.");
-		}
+	public void processBarArtifacts() throws MojoExecutionException, MojoFailureException {
+		if(barArtifacts == null || barArtifacts.length == 0) {
+			throw new MojoFailureException("Invalid configuration, no BAR artifacts found.");
+        }
 
-		for(Barfile b : barfiles) {
-			process(b.getFilename(), b.getArtifacts(), b.getProjects());
+		for(BarArtifactSet artifact : barArtifacts) {
+            if(artifact.isFilenameProvided()) {
+			    process(artifact.getFilename().concat(BarArtifactSet.EXT_BAR),
+                        artifact.getIncludesArray(),
+                        artifact.getProjects());
+            } else {
+                for (String filename : artifact.getIncludesArray()) {
+                    process(BarUtils.createIndividualBarFilename(artifact, filename), new String[] { filename }, artifact.getProjects());
+                }
+            }
 		}
 	}
 
@@ -170,14 +102,16 @@ public class CreateBarMojo extends AbstractMojo {
 	 * best practice for using mqsicreatebar, which runs a headless instance
 	 * of Eclipse each time it is invoked.
 	 * 
-	 * @param barfile
+	 * @param filename
+     * @param artifacts
+     * @param projects
 	 * @throws MojoExecutionException 
 	 * @throws IOException
 	 */
 	private void process(String filename, String[] artifacts, String[] projects) throws MojoExecutionException {
 		
 		List<String> cmdlist = new ArrayList<String>();
-		cmdlist.add(mqsicreatebar);
+		cmdlist.add(getMQSICreateBar().getAbsolutePath());
 		cmdlist.add("-data");
 		cmdlist.add(basedir);
 		cmdlist.add("-b");
@@ -185,15 +119,11 @@ public class CreateBarMojo extends AbstractMojo {
 		cmdlist.add("-cleanBuild");
 		cmdlist.add("-o");
 
-		for (String artifact : artifacts) {
-			cmdlist.add(artifact);
-		}
+        Collections.addAll(cmdlist, artifacts);
 
 		if (projects != null && projects.length > 0) {
 			cmdlist.add("-p");
-			for (String project : projects) {
-				cmdlist.add(project);
-			}
+            Collections.addAll(cmdlist, projects);
 		}
 
 		ProcessBuilder pb = new ProcessBuilder(cmdlist);
@@ -205,104 +135,25 @@ public class CreateBarMojo extends AbstractMojo {
 		Process proc = null;
 		try {
 			proc = pb.start();
+            try {
+				proc.waitFor();
+			} catch (InterruptedException e) {
+				throw new MojoExecutionException("Error waiting for mqsicreatebar.", e);
+			} finally {
+                try {
+                    proc.getErrorStream().close();
+                    proc.getInputStream().close();
+                    proc.getOutputStream().close();
+                } catch (IOException e) {
+                    getLog().warn("Error closing mqsicreatebar process IO stream.", e);
+                }
+            }
 		} catch (IOException e) {
 			throw new MojoExecutionException("Error running mqsicreatebar command.", e);
 		} finally {
-			try {
-				proc.waitFor();
-				proc.getErrorStream().close();
-				proc.getInputStream().close();
-				proc.getOutputStream().close();
-				getLog().info("mqsicreatebar returned exit code " + proc.exitValue());
-			} catch (InterruptedException e) {
-				throw new MojoExecutionException("Error waiting for mqsicreatebar.", e);
-			} catch (IOException e) {
-				throw new MojoExecutionException("Error closing mqsicreatebar.", e);
-			}
-		}
-	}
-
-	/**
-	 * @return the mqsicreatebar
-	 */
-	public String getMqsicreatebar() {
-		return mqsicreatebar;
-	}
-
-	/**
-	 * @param pMqsicreatebar the mqsicreatebar to set
-	 */
-	public void setMqsicreatebar(String pMqsicreatebar) {
-		mqsicreatebar = pMqsicreatebar;
-	}
-
-	/**
-	 * @return the mode
-	 */
-	public String getMode() {
-		return mode;
-	}
-
-	/**
-	 * @param pMode the mode to set
-	 */
-	public void setMode(String pMode) {
-		mode = pMode;
-	}
-
-	/**
-	 * @return the barfiles
-	 */
-	public Barfile[] getBarfiles() {
-		return barfiles;
-	}
-
-	/**
-	 * @param pBarfiles the barfiles to set
-	 */
-	public void setBarfiles(Barfile[] pBarfiles) {
-		barfiles = pBarfiles;
-	}
-
-	/**
-	 * @return the filename
-	 */
-	public String getFilename() {
-		return filename;
-	}
-
-	/**
-	 * @param pFilename the filename to set
-	 */
-	public void setFilename(String pFilename) {
-		filename = pFilename;
-	}
-
-	/**
-	 * @return the artifacts
-	 */
-	public String[] getArtifacts() {
-		return artifacts;
-	}
-
-	/**
-	 * @param pArtifacts the artifacts to set
-	 */
-	public void setArtifacts(String[] pArtifacts) {
-		artifacts = pArtifacts;
-	}
-
-	/**
-	 * @return the projects
-	 */
-	public String[] getProjects() {
-		return projects;
-	}
-
-	/**
-	 * @param pProjects the projects to set
-	 */
-	public void setProjects(String[] pProjects) {
-		projects = pProjects;
+            if(proc != null) {
+                getLog().info("mqsicreatebar returned exit code " + proc.exitValue());
+            }
+        }
 	}
 }

@@ -3,13 +3,6 @@
  */
 package com.pressassociation.maven.wmb;
 
-import java.io.File;
-import java.io.IOException;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-
-import com.ibm.broker.config.proxy.BrokerConnectionParameters;
 import com.ibm.broker.config.proxy.BrokerProxy;
 import com.ibm.broker.config.proxy.CompletionCodeType;
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
@@ -17,6 +10,10 @@ import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedExcep
 import com.ibm.broker.config.proxy.DeployResult;
 import com.ibm.broker.config.proxy.ExecutionGroupProxy;
 import com.ibm.broker.config.proxy.MQBrokerConnectionParameters;
+import org.apache.maven.plugin.MojoExecutionException;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Maven mojo for deploying BAR files to a Websphere Message Broker instance.
@@ -27,204 +24,128 @@ import com.ibm.broker.config.proxy.MQBrokerConnectionParameters;
  * configuration setting on a per-BAR-file basis.
  *
  * @author Simon Beaver
+ * @author Bob Browning
  * @version 1.0
- * 
  * @goal deploy
  * @phase deploy
  * @requiresDependencyResolution
  */
-public class DeployBarMojo extends AbstractMojo {
+public final class DeployBarMojo extends AbstractBarMojo {
 
-	/**
-	 * Hostname of server to which BAR files will be deployed.
-	 * @parameter expression="${hostname}"
-	 */
-	private String hostname;
+    private static final int BROKER_TIMEOUT = 30000;
+    /**
+     * Hostname of server to which BAR files will be deployed.
+     *
+     * @parameter default-value="localhost" expression="${wmb.host}"
+     */
+    private String hostname;
 
-	/**
-	 * Port on which to connect to server.
-	 * @parameter expression="${port}"
-	 */
-	private int port;
+    /**
+     * Port on which to connect to server.
+     *
+     * @parameter default-value="7080" expression="${wmb.port}"
+     */
+    private int port;
 
-	/**
-	 * Queue Manager to use when connecting to Message Broker.
-	 * @parameter expression="${queueMgr}"
-	 */
-	private String queueMgr;
+    /**
+     * Queue Manager to use when connecting to Message Broker.
+     *
+     * @parameter expression="${wmb.queueMgr}"
+     * @required
+     */
+    private String queueMgr;
 
-	/**
-	 * Name of execution group.
-	 * @parameter expression="${execGroup}"
-	 */
-	private String executionGroup;
+    /**
+     * Broker connection parameters.
+     */
+    private MQBrokerConnectionParameters connectionParameters;
 
-	/**
-	 * Target directory containing BAR files to deploy.
-	 * @parameter expression="${project.build.directory}"
-	 */
-	private String targetDir;
+    /**
+     * Main execution method.
+     *
+     * @throws MojoExecutionException
+     */
+    @Override
+    public void execute() throws MojoExecutionException {
+        processFromDeployments();
+    }
 
-	/**
-	 * List of BAR file configurations.
-	 * @parameter
-	 */
-	private Deploy[] deployments;
+    /**
+     * Getter to retrieve broker connection parameters.
+     *
+     * @return MQBrokerConnectionParameters
+     */
+    private MQBrokerConnectionParameters getConnectionParameters() {
+        if (connectionParameters == null) {
+            connectionParameters = new MQBrokerConnectionParameters(hostname, port, queueMgr);
+        }
+        return connectionParameters;
+    }
 
-	/**
-	 * Main execution method.
-	 */
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+    /**
+     * Use the 'deployments' configuration element to drive the deployment process.
+     * For each defined BAR file, check that the file exists and then deploy it to
+     * the execution group specified in the configuration, which is assumed to reside
+     * on a server defined in a Maven profile within the project's POM file.
+     *
+     * @throws MojoExecutionException
+     */
+    private void processFromDeployments() throws MojoExecutionException {
+        try {
+            BrokerProxy brokerProxy = BrokerProxy.getInstance(getConnectionParameters());
+            for (BarArtifactSet artifact : barArtifacts) {
+                /* Ignore artifacts marked as non-deployable */
+                if (!artifact.isDeployable()) {
+                    continue;
+                }
+                if (artifact.isFilenameProvided()) {
+                    final String filename = targetdir + File.separatorChar
+                            + artifact.getFilename() + BarArtifactSet.EXT_BAR;
+                    deployBarFile(brokerProxy, artifact, new File(filename));
+                } else {
+                    for (String filename : artifact.getIncludesArray()) {
+                        deployBarFile(brokerProxy, artifact,
+                                new File(targetdir, BarUtils.createIndividualBarFilename(artifact, filename)));
+                    }
+                }
+            }
+        } catch (ConfigManagerProxyLoggedException e) {
+            throw new MojoExecutionException("Unable to connect to broker", e);
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new MojoExecutionException("Unable to connect to execution group.", e);
+        } catch (IOException e) {
+            throw new MojoExecutionException("Unable to deploy barfile.", e);
+        }
+    }
 
-		if (deployments != null) {
-			processFromDeployments();
-		} else {
-			processFromTarget();
-		}
-	}
-
-	/**
-	 * Use the 'deployments' configuration element to drive the deployment process.
-	 * For each defined BAR file, check that the file exists and then deploy it to
-	 * the execution group specified in the configuration, which is assumed to reside
-	 * on a server defined in a Maven profile within the project's POM file.
-	 * @throws MojoExecutionException 
-	 */
-	private void processFromDeployments() throws MojoExecutionException {
-
-		BrokerConnectionParameters bcp = new MQBrokerConnectionParameters(hostname, port, queueMgr);
-		try {
-			BrokerProxy bp = BrokerProxy.getInstance(bcp);
-			DeployResult dr = null;
-			ExecutionGroupProxy egp = null;
-			for (Deploy d : deployments) {
-				String filename = targetDir + "/" + d.getFile();
-				File file = new File(filename);
-				if (file.exists()) {
-					egp = bp.getExecutionGroupByName(d.getExecGrp());
-					dr = egp.deploy(filename, true, 30000);
-					if (dr.getCompletionCode() != CompletionCodeType.success) {
-						throw new MojoExecutionException("Error deploying BAR file: " + dr.getCompletionCode().toString());
-					} else {
-						getLog().info("BAR file '" + d.getFile() + "' deployed to execution group '" + d.getExecGrp() + "'");
-					}
-				}
-			}
-		} catch (ConfigManagerProxyLoggedException e) {
-			throw new MojoExecutionException("Unable to connect to broker", e);
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new MojoExecutionException("Unable to connect to execution group.", e);
-		} catch (IOException e) {
-			throw new MojoExecutionException("Unable to deploy barfile.", e);
-		}
-	}
-
-	/**
-	 * Use the BAR files in the target directory to drive the deployment process.
-	 * List all BAR files that currently exist, and deploy them to the server and
-	 * execution group defined in a Maven profile within the project's POM file.
-	 * @throws MojoExecutionException 
-	 */
-	private void processFromTarget() throws MojoExecutionException {
-
-		File bardir = new File(targetDir);
-		String[] filelist = bardir.list(new BarFilter());
-		if (filelist != null) {
-
-			BrokerConnectionParameters bcp = new MQBrokerConnectionParameters(hostname, port, queueMgr);
-			try {
-				BrokerProxy bp = BrokerProxy.getInstance(bcp);
-				ExecutionGroupProxy egp = bp.getExecutionGroupByName(executionGroup);
-				DeployResult dr = null;
-				String filename = null;
-				for (String barfile : filelist) {
-					filename = targetDir + "/" + barfile;
-					dr = egp.deploy(filename, true, 30000);
-					if (dr.getCompletionCode() != CompletionCodeType.success) {
-						throw new MojoExecutionException("Error deploying BAR file: " + dr.getCompletionCode().toString());
-					} else {
-						getLog().info("BAR file '" + barfile + "' deployed to execution group '" + executionGroup + "'");
-					}
-				}
-			} catch (ConfigManagerProxyLoggedException e) {
-				throw new MojoExecutionException("Unable to connect to broker", e);
-			} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-				throw new MojoExecutionException("Unable to connect to execution group.", e);
-			} catch (IOException e) {
-				throw new MojoExecutionException("Unable to deploy barfile.", e);
-			}
-		}
-	}
-
-	/**
-	 * @return the hostname
-	 */
-	public String getHostname() {
-		return hostname;
-	}
-
-	/**
-	 * @param pHostname the hostname to set
-	 */
-	public void setHostname(String pHostname) {
-		hostname = pHostname;
-	}
-
-	/**
-	 * @return the port
-	 */
-	public int getPort() {
-		return port;
-	}
-
-	/**
-	 * @param pPort the port to set
-	 */
-	public void setPort(int pPort) {
-		port = pPort;
-	}
-
-	/**
-	 * @return the queueMgr
-	 */
-	public String getQueueMgr() {
-		return queueMgr;
-	}
-
-	/**
-	 * @param pQueueMgr the queueMgr to set
-	 */
-	public void setQueueMgr(String pQueueMgr) {
-		queueMgr = pQueueMgr;
-	}
-
-	/**
-	 * @return the executionGroup
-	 */
-	public String getExecutionGroup() {
-		return executionGroup;
-	}
-
-	/**
-	 * @param pExecutionGroup the executionGroup to set
-	 */
-	public void setExecutionGroup(String pExecutionGroup) {
-		executionGroup = pExecutionGroup;
-	}
-
-	/**
-	 * @return the targetDir
-	 */
-	public String getTargetDir() {
-		return targetDir;
-	}
-
-	/**
-	 * @param pTargetDir the targetDir to set
-	 */
-	public void setTargetDir(String pTargetDir) {
-		targetDir = pTargetDir;
-	}
-
+    /**
+     * Deploys a bar file using the specified broker connection proxy
+     *
+     * @param broker The broker proxy to use to deploy the bar
+     * @param artifact The artifact to be deployed
+     * @param file the filename of the BAR
+     * @throws ConfigManagerProxyLoggedException
+     * @throws IOException
+     * @throws MojoExecutionException
+     * @throws ConfigManagerProxyPropertyNotInitializedException
+     */
+    private void deployBarFile(final BrokerProxy broker, final BarArtifactSet artifact, final File file)
+            throws ConfigManagerProxyLoggedException, IOException, MojoExecutionException,
+            ConfigManagerProxyPropertyNotInitializedException {
+        if (file.exists()) {
+            ExecutionGroupProxy executionGroup = broker.getExecutionGroupByName(artifact.getExecutionGroup());
+            if (executionGroup != null) {
+                DeployResult result = executionGroup.deploy(file.getPath(), true, BROKER_TIMEOUT);
+                if (result.getCompletionCode() != CompletionCodeType.success) {
+                    throw new MojoExecutionException("Error deploying BAR file: "
+                            + result.getCompletionCode().toString());
+                } else {
+                    getLog().info("BAR file '" + file.getName()
+                            + "' deployed to execution group '" + artifact.getExecutionGroup() + "'");
+                }
+            } else {
+                getLog().warn("Could not connect to execution group " + artifact.getExecutionGroup() + ".");
+            }
+        }
+    }
 }
