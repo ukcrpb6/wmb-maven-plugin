@@ -11,6 +11,10 @@ import com.ibm.broker.config.proxy.DeployResult;
 import com.ibm.broker.config.proxy.ExecutionGroupProxy;
 import com.ibm.broker.config.proxy.MQBrokerConnectionParameters;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.shared.model.fileset.FileSet;
+import org.jfrog.maven.annomojo.annotations.MojoGoal;
+import org.jfrog.maven.annomojo.annotations.MojoParameter;
+import org.jfrog.maven.annomojo.annotations.MojoPhase;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,36 +27,30 @@ import java.io.IOException;
  * This can be specified either as a global value, or else within the <barfile/>
  * configuration setting on a per-BAR-file basis.
  *
- * @author Simon Beaver
  * @author Bob Browning
- * @version 1.0
- * @goal deploy
- * @phase deploy
- * @requiresDependencyResolution
  */
+@MojoGoal("deploy")
+@MojoPhase("deploy")
 public final class DeployBarMojo extends AbstractBarMojo {
 
     private static final int BROKER_TIMEOUT = 30000;
+
     /**
      * Hostname of server to which BAR files will be deployed.
-     *
-     * @parameter default-value="localhost" expression="${wmb.host}"
      */
+    @MojoParameter(expression = "${wmb.host}", defaultValue = "localhost")
     private String hostname;
 
     /**
      * Port on which to connect to server.
-     *
-     * @parameter default-value="7080" expression="${wmb.port}"
      */
+    @MojoParameter(expression = "${wmb.port}", defaultValue = "7080")
     private int port;
 
     /**
      * Queue Manager to use when connecting to Message Broker.
-     *
-     * @parameter expression="${wmb.queueMgr}"
-     * @required
      */
+    @MojoParameter(expression = "${wmb.queueMgr}", required = true)
     private String queueMgr;
 
     /**
@@ -93,17 +91,22 @@ public final class DeployBarMojo extends AbstractBarMojo {
     private void processFromDeployments() throws MojoExecutionException {
         try {
             BrokerProxy brokerProxy = BrokerProxy.getInstance(getConnectionParameters());
-            for (BarArtifactSet artifact : barArtifacts) {
+            for (BrokerArchive artifact : brokerArchives) {
                 /* Ignore artifacts marked as non-deployable */
                 if (!artifact.isDeployable()) {
                     continue;
                 }
                 if (artifact.isFilenameProvided()) {
                     final String filename = targetdir + File.separatorChar
-                            + artifact.getFilename() + BarArtifactSet.EXT_BAR;
+                            + artifact.getFilename() + BrokerArchive.EXT_BAR;
                     deployBarFile(brokerProxy, artifact, new File(filename));
                 } else {
-                    for (String filename : artifact.getIncludesArray()) {
+                    FileSet fileSet = artifact.getFlows();
+                    if(fileSet.getDirectory() == null) {
+                        fileSet.setDirectory(basedir);
+                    }
+                    String[] includedFiles = fileSetManager.getIncludedFiles(artifact.getFlows());
+                    for (String filename : includedFiles) {
                         deployBarFile(brokerProxy, artifact,
                                 new File(targetdir, BarUtils.createIndividualBarFilename(artifact, filename)));
                     }
@@ -129,7 +132,7 @@ public final class DeployBarMojo extends AbstractBarMojo {
      * @throws MojoExecutionException
      * @throws ConfigManagerProxyPropertyNotInitializedException
      */
-    private void deployBarFile(final BrokerProxy broker, final BarArtifactSet artifact, final File file)
+    private void deployBarFile(final BrokerProxy broker, final BrokerArchive artifact, final File file)
             throws ConfigManagerProxyLoggedException, IOException, MojoExecutionException,
             ConfigManagerProxyPropertyNotInitializedException {
         if (file.exists()) {

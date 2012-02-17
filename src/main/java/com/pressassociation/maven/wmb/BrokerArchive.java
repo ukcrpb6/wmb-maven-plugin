@@ -8,28 +8,31 @@ import org.apache.maven.shared.model.fileset.FileSet;
 /**
  * Data object holding parameters needed to create a BAR file.
  *
- * @author Simon Beaver
  * @author Bob Browning
- * @version $Id$
  */
-public class BarArtifactSet extends FileSet {
+public class BrokerArchive {
 
     public static final String EXT_BAR = ".bar";
 
     /**
 	 * Name of BAR.
 	 */
-	private String _filename = "";
+    private String filename = "";
 
     /**
-     * Name _prefix for individual bar files.
+     * Name prefix for individual bar files.
      */
-    private String _prefix = "";
+    private String prefix = "";
 
 	/**
-	 * List of dependent _projects for the artifacts.
+	 * List of dependent projects for the artifacts.
 	 */
-	private String[] _projects;
+	private String[] projects;
+
+    /**
+     * Fileset of flows
+     */
+    private FileSet flows;
 
 	/**
 	 * Execution Group to which this BAR file should be deployed.
@@ -37,31 +40,31 @@ public class BarArtifactSet extends FileSet {
 	private String _executionGroup = "";
 
 	/**
-	 * @return the _filename
+	 * @return the filename
 	 */
 	public String getFilename() {
-		return _filename;
+		return filename;
 	}
 
 	/**
-	 * @param pName the _filename to set
+	 * @param pName the filename to set
 	 */
 	public void setFilename(final String pName) {
-		_filename = pName;
+		filename = pName;
 	}
 
 	/**
-	 * @param projects the _projects to set
+	 * @param projects the projects to set
 	 */
 	public void setProjects(final String[] projects) {
-		this._projects = projects;
+		this.projects = projects;
 	}
 
 	/**
-	 * @return the _projects
+	 * @return the projects
 	 */
 	public String[] getProjects() {
-		return _projects;
+		return projects;
 	}
 
 	/**
@@ -86,14 +89,22 @@ public class BarArtifactSet extends FileSet {
     }
 
     public boolean isFilenameProvided() {
-        return !"".equals(_filename);
+        return !"".equals(filename);
     }
 
     public String getPrefix() {
-        return _prefix;
+        return prefix;
     }
 
     public void setPrefix(final String prefix) {
-        this._prefix = prefix;
+        this.prefix = prefix;
+    }
+
+    public FileSet getFlows() {
+        return flows;
+    }
+
+    public void setFlows(FileSet flows) {
+        this.flows = flows;
     }
 }
