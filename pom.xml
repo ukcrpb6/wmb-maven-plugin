@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.pressassociation.maven</groupId>
@@ -17,9 +16,24 @@
 
     <scm>
         <connection>scm:git:http://github.com/ukcrpb6/wmb-maven-plugin</connection>
-        <developerConnection>scm:git:http://github.com/ukcrpb6/wmb-maven-plugin</developerConnection>
+        <developerConnection>scm:git:https://github.com/ukcrpb6/wmb-maven-plugin</developerConnection>
         <url>http://github.com/ukcrpb6/wmb-maven-plugin</url>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>pressassociation.releases</id>
+            <layout>default</layout>
+            <name>Press Association Internal Releases Repository</name>
+            <url>http://nexus.howden.press.net/nexus/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>pressassociation.snapshots</id>
+            <layout>default</layout>
+            <name>Press Association Internal Snapshots Repository</name>
+            <url>http://nexus.howden.press.net/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <dependencies>
         <!-- Maven MOJO Dependencies -->
@@ -136,6 +150,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.2.2</version>
                 <configuration>
+                    <pushChanges>false</pushChanges>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
