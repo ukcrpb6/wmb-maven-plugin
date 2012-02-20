@@ -1,11 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.pressassociation</groupId>
-        <artifactId>super-pom</artifactId>
-        <version>0.3.1</version>
-    </parent>
 
     <groupId>com.pressassociation.maven</groupId>
     <artifactId>wmb-maven-plugin</artifactId>
@@ -16,9 +11,18 @@
 
     <properties>
         <maven.version>2.2.1</maven.version>
+        <ibm.wmb.version>7.0.0.1</ibm.wmb.version>
+        <ibm.mq.version>7.0.1.5</ibm.mq.version>
     </properties>
 
+    <scm>
+        <connection>scm:git:http://github.com/ukcrpb6/wmb-maven-plugin</connection>
+        <developerConnection>scm:git:http://github.com/ukcrpb6/wmb-maven-plugin</developerConnection>
+        <url>http://github.com/ukcrpb6/wmb-maven-plugin</url>
+    </scm>
+
     <dependencies>
+        <!-- Maven MOJO Dependencies -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
@@ -39,47 +43,45 @@
             <artifactId>maven-project</artifactId>
             <version>${maven.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-utils</artifactId>
-            <version>3.0</version>
-        </dependency>
+
+        <!-- IBM Dependencies -->
         <dependency>
             <groupId>com.ibm</groupId>
             <artifactId>config-manager-proxy</artifactId>
-            <version>7.0.0.1</version>
+            <version>${ibm.wmb.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
             <artifactId>com.ibm.mq.commonservices</artifactId>
-            <version>7.0.1.5</version>
+            <version>${ibm.mq.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
             <artifactId>connector</artifactId>
-            <version>7.0.1.5</version>
+            <version>${ibm.mq.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
             <artifactId>dhbcore</artifactId>
-            <version>7.0.1.5</version>
+            <version>${ibm.mq.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
             <artifactId>com.ibm.mq.headers</artifactId>
-            <version>7.0.1.5</version>
+            <version>${ibm.mq.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
             <artifactId>com.ibm.mq.jmqi</artifactId>
-            <version>7.0.1.5</version>
+            <version>${ibm.mq.version}</version>
         </dependency>
 
+
+        <!-- Maven Utility Dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-utils</artifactId>
+            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.shared</groupId>
@@ -88,10 +90,19 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Annotations for Maven MOJOs -->
         <dependency>
             <groupId>org.jfrog.maven.annomojo</groupId>
             <artifactId>maven-plugin-anno</artifactId>
             <version>1.4.1</version>
+        </dependency>
+
+        <!-- Testing Dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -112,6 +123,21 @@
                         <scope>runtime</scope>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.2.2</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
             </plugin>
         </plugins>
     </build>
