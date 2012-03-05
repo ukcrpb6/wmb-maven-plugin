@@ -13,7 +13,6 @@ import org.codehaus.plexus.util.IOUtil;
 import org.jfrog.maven.annomojo.annotations.MojoComponent;
 import org.jfrog.maven.annomojo.annotations.MojoGoal;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;
-import org.jfrog.maven.annomojo.annotations.MojoPhase;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,7 +27,6 @@ import java.util.List;
  *
  * @author Bob Browning
  */
-@MojoPhase("package")
 @MojoGoal("package")
 public final class PackageBarMojo extends AbstractBarMojo {
 

@@ -4,6 +4,8 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.shared.model.fileset.util.FileSetManager;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;
 
+import java.io.File;
+
 /**
  * @author Bob Browning
  */
@@ -26,4 +28,9 @@ public abstract class AbstractBarMojo extends AbstractMojo {
 
     protected FileSetManager fileSetManager = new FileSetManager();
 
+    /**
+     * Full path to mqsicreatebar command.
+     */
+    @MojoParameter(defaultValue = "/opt/IBM/WMBT700", expression = "${wmb.toolkitDirectory}")
+    protected File toolkitDirectory;
 }

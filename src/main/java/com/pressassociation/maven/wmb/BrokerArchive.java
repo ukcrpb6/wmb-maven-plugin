@@ -12,12 +12,10 @@ import org.apache.maven.shared.model.fileset.FileSet;
  */
 public class BrokerArchive {
 
-    public static final String EXT_BAR = ".bar";
-
     /**
-	 * Name of BAR.
+	 * Broker archive classifier
 	 */
-    private String filename = "";
+    private String classifier = "";
 
     /**
      * Name prefix for individual bar files.
@@ -40,17 +38,17 @@ public class BrokerArchive {
 	private String _executionGroup = "";
 
 	/**
-	 * @return the filename
+	 * @return the classifier
 	 */
-	public String getFilename() {
-		return filename;
+	public String getClassifier() {
+		return classifier;
 	}
 
 	/**
-	 * @param pName the filename to set
+	 * @param pName the classifier to set
 	 */
-	public void setFilename(final String pName) {
-		filename = pName;
+	public void setClassifier(final String pName) {
+		classifier = pName;
 	}
 
 	/**
@@ -89,7 +87,7 @@ public class BrokerArchive {
     }
 
     public boolean isFilenameProvided() {
-        return !"".equals(filename);
+        return !"".equals(classifier);
     }
 
     public String getPrefix() {

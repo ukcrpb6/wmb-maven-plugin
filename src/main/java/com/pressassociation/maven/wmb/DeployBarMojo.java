@@ -3,18 +3,11 @@
  */
 package com.pressassociation.maven.wmb;
 
-import com.ibm.broker.config.proxy.BrokerProxy;
-import com.ibm.broker.config.proxy.CompletionCodeType;
-import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
-import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
-import com.ibm.broker.config.proxy.DeployResult;
-import com.ibm.broker.config.proxy.ExecutionGroupProxy;
-import com.ibm.broker.config.proxy.MQBrokerConnectionParameters;
+import com.ibm.broker.config.proxy.*;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.shared.model.fileset.FileSet;
 import org.jfrog.maven.annomojo.annotations.MojoGoal;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;
-import org.jfrog.maven.annomojo.annotations.MojoPhase;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +23,6 @@ import java.io.IOException;
  * @author Bob Browning
  */
 @MojoGoal("deploy")
-@MojoPhase("deploy")
 public final class DeployBarMojo extends AbstractBarMojo {
 
     private static final int BROKER_TIMEOUT = 30000;
@@ -98,7 +90,7 @@ public final class DeployBarMojo extends AbstractBarMojo {
                 }
                 if (artifact.isFilenameProvided()) {
                     final String filename = targetdir + File.separatorChar
-                            + artifact.getFilename() + BrokerArchive.EXT_BAR;
+                            + artifact.getClassifier() + Types.BROKER_ARCHIVE_EXTENSION;
                     deployBarFile(brokerProxy, artifact, new File(filename));
                 } else {
                     FileSet fileSet = artifact.getFlows();
@@ -108,7 +100,7 @@ public final class DeployBarMojo extends AbstractBarMojo {
                     String[] includedFiles = fileSetManager.getIncludedFiles(artifact.getFlows());
                     for (String filename : includedFiles) {
                         deployBarFile(brokerProxy, artifact,
-                                new File(targetdir, BarUtils.createIndividualBarFilename(artifact, filename)));
+                                new File(targetdir, BarUtils.createIndividualBarClassifier(artifact, filename)));
                     }
                 }
             }
