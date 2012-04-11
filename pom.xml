@@ -195,6 +195,7 @@
                 <version>2.2.2</version>
                 <configuration>
                     <pushChanges>false</pushChanges>
+                    <localCheckout>true</localCheckout>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
