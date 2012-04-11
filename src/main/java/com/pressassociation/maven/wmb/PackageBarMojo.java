@@ -11,6 +11,7 @@ import org.apache.maven.shared.model.fileset.FileSet;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.jfrog.maven.annomojo.annotations.MojoComponent;
+import org.jfrog.maven.annomojo.annotations.MojoExecute;
 import org.jfrog.maven.annomojo.annotations.MojoGoal;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;
 
@@ -28,6 +29,7 @@ import java.util.List;
  * @author Bob Browning
  */
 @MojoGoal("package")
+@MojoExecute(goal = "process-resources")
 public final class PackageBarMojo extends AbstractBarMojo {
 
     @MojoParameter(required = true, expression = "${project}", readonly = true)
@@ -124,7 +126,7 @@ public final class PackageBarMojo extends AbstractBarMojo {
         List<String> cmdlist = new ArrayList<String>();
         cmdlist.add(getMQSICreateBar().getAbsolutePath());
         cmdlist.add("-data");
-        cmdlist.add(basedir);
+        cmdlist.add(generatedSourcesDir);
         cmdlist.add("-b");
         cmdlist.add(barArchive.getAbsolutePath());
         cmdlist.add("-cleanBuild");
@@ -138,7 +140,7 @@ public final class PackageBarMojo extends AbstractBarMojo {
         }
 
         ProcessBuilder pb = new ProcessBuilder(cmdlist);
-        pb.directory(new File(basedir));
+        pb.directory(new File(generatedSourcesDir));
 
         // Run the build command.
         try {

@@ -1,23 +1,24 @@
 <component-set>
-	<components>
-		<component>
-			<role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
-			<role-hint>bar</role-hint>
-			<implementation>
-				org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
-			</implementation>
-			<configuration>
+    <components>
+        <component>
+            <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+            <role-hint>bar</role-hint>
+            <implementation>
+                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+            </implementation>
+            <configuration>
                 <lifecycles>
                     <lifecycle>
                         <id>default</id>
                         <phases>
+                            <process-resources>com.pressassociation.maven:wmb-maven-plugin:process-resources</process-resources>
                             <package>com.pressassociation.maven:wmb-maven-plugin:package</package>
                             <deploy>org.apache.maven.plugins:maven-deploy-plugin:deploy</deploy>
                         </phases>
                     </lifecycle>
                 </lifecycles>
-			</configuration>
-		</component>
+            </configuration>
+        </component>
         <component>
             <role>org.apache.maven.artifact.handler.ArtifactHandler</role>
             <role-hint>bar</role-hint>
@@ -29,5 +30,5 @@
                 <addedToClasspath>false</addedToClasspath>
             </configuration>
         </component>
-	</components>
+    </components>
 </component-set>

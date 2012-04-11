@@ -1,18 +1,18 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.pressassociation.maven</groupId>
     <artifactId>wmb-maven-plugin</artifactId>
-    <packaging>maven-plugin</packaging>
     <version>1.3-SNAPSHOT</version>
+    <packaging>maven-plugin</packaging>
 
-    <name>wmb-maven-plugin Maven Mojo</name>
+    <name>Websphere Message Broker Archive Plugin</name>
+    <description>Plugin to create broker archives for Websphere message broker.</description>
 
-    <properties>
-        <maven.version>2.2.1</maven.version>
-        <ibm.wmb.version>7.0.0.1</ibm.wmb.version>
-        <ibm.mq.version>7.0.1.5</ibm.mq.version>
-    </properties>
+    <prerequisites>
+        <maven>2.2.1</maven>
+    </prerequisites>
 
     <scm>
         <connection>scm:git:git@github.com:ukcrpb6/wmb-maven-plugin.git</connection>
@@ -34,6 +34,12 @@
             <url>http://nexus.howden.press.net/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <properties>
+        <maven.version>2.2.1</maven.version>
+        <ibm.wmb.version>7.0.0.1</ibm.wmb.version>
+        <ibm.mq.version>7.0.1.5</ibm.mq.version>
+    </properties>
 
     <dependencies>
         <!-- Maven MOJO Dependencies -->
@@ -103,12 +109,24 @@
             <version>1.2.1</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-compiler-api</artifactId>
+            <version>1.8.1</version>
+        </dependency>
 
         <!-- Annotations for Maven MOJOs -->
         <dependency>
             <groupId>org.jfrog.maven.annomojo</groupId>
             <artifactId>maven-plugin-anno</artifactId>
             <version>1.4.1</version>
+        </dependency>
+
+        <!-- Other -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>11.0.2</version>
         </dependency>
 
         <!-- Testing Dependencies -->
@@ -119,6 +137,25 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jfrog</id>
+            <name>jfrog</name>
+            <url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jfrog</id>
+            <name>jfrog</name>
+            <url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <plugins>
@@ -156,24 +193,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>jfrog</id>
-            <name>jfrog</name>
-            <url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>jfrog</id>
-            <name>jfrog</name>
-            <url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>

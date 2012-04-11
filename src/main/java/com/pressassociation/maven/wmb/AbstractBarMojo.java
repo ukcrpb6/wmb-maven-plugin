@@ -11,19 +11,25 @@ import java.io.File;
  */
 public abstract class AbstractBarMojo extends AbstractMojo {
 
-    @MojoParameter(required = true, alias = "bars")
+    @MojoParameter(readonly = true, required = true, alias = "bars")
     protected BrokerArchive[] brokerArchives;
 
     /**
      * Base directory.
      */
-    @MojoParameter(expression = "${basedir}")
+    @MojoParameter(expression = "${basedir}", readonly = true, required = true)
     protected String basedir;
 
     /**
      * Target directory for build output.
      */
-    @MojoParameter(expression = "${project.build.directory}")
+    @MojoParameter(expression = "${project.build.directory}/generated-sources", readonly = true, required = true)
+    protected String generatedSourcesDir;
+
+    /**
+     * Target directory for build output.
+     */
+    @MojoParameter(expression = "${project.build.directory}", readonly = true, required = true)
     protected String targetdir;
 
     protected FileSetManager fileSetManager = new FileSetManager();
@@ -33,4 +39,5 @@ public abstract class AbstractBarMojo extends AbstractMojo {
      */
     @MojoParameter(defaultValue = "/opt/IBM/WMBT700", expression = "${wmb.toolkitDirectory}")
     protected File toolkitDirectory;
+
 }

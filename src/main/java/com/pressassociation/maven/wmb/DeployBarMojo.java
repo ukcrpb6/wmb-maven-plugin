@@ -6,6 +6,7 @@ package com.pressassociation.maven.wmb;
 import com.ibm.broker.config.proxy.*;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.shared.model.fileset.FileSet;
+import org.jfrog.maven.annomojo.annotations.MojoExecute;
 import org.jfrog.maven.annomojo.annotations.MojoGoal;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
  * @author Bob Browning
  */
 @MojoGoal("deploy")
+@MojoExecute(goal = "process-resources")
 public final class DeployBarMojo extends AbstractBarMojo {
 
     private static final int BROKER_TIMEOUT = 30000;
@@ -95,7 +97,7 @@ public final class DeployBarMojo extends AbstractBarMojo {
                 } else {
                     FileSet fileSet = artifact.getFlows();
                     if(fileSet.getDirectory() == null) {
-                        fileSet.setDirectory(basedir);
+                        fileSet.setDirectory(generatedSourcesDir);
                     }
                     String[] includedFiles = fileSetManager.getIncludedFiles(artifact.getFlows());
                     for (String filename : includedFiles) {
