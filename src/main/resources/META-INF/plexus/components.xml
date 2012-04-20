@@ -3,9 +3,7 @@
         <component>
             <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
             <role-hint>bar</role-hint>
-            <implementation>
-                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
-            </implementation>
+            <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>
             <configuration>
                 <lifecycles>
                     <lifecycle>
@@ -29,6 +27,11 @@
                 <packaging>bar</packaging>
                 <addedToClasspath>false</addedToClasspath>
             </configuration>
+        </component>
+        <component>
+            <role>com.pressassociation.maven.wmb.configure.BarConfigurator</role>
+            <role-hint>default</role-hint>
+            <implementation>com.pressassociation.maven.wmb.configure.DefaultBarConfigurator</implementation>
         </component>
     </components>
 </component-set>
