@@ -11,26 +11,25 @@ import java.util.*;
  */
 public class TypeSafetyHelper {
 
-    public static <T> List<T> typeSafeList(List<?> list, final Class<T> klazz) {
-        return Lists.transform(list, new Function<Object, T>() {
+    public static <T> Function<Object, T> typeSafeCast(final Class<T> klass) {
+        return new Function<Object, T>() {
             @Override
-            public T apply(@Nullable Object o) {
-                return klazz.cast(o);
+            public T apply(@Nullable Object input) {
+                return klass.cast(input);
             }
-        });
+        };
     }
 
-    public static <T> Set<T> typeSafeSet(Set<?> set, final Class<T> klazz) {
-        return Sets.newHashSet(typeSafeCollection(set, klazz));
+    public static <T> List<T> typeSafeList(List<?> list, Class<T> klazz) {
+        return Lists.transform(list, typeSafeCast(klazz));
     }
 
-    public static <T> Collection<T> typeSafeCollection(Collection<?> collection, final Class<T> klazz) {
-        return Collections2.transform(collection, new Function<Object, T>() {
-            @Override
-            public T apply(@Nullable Object o) {
-                return klazz.cast(o);
-            }
-        });
+    public static <T> Set<T> typeSafeSet(Set<?> set, Class<T> klazz) {
+        return ImmutableSet.copyOf(Iterables.transform(set, typeSafeCast(klazz)));
+    }
+
+    public static <T> Collection<T> typeSafeCollection(Collection<?> collection, Class<T> klazz) {
+        return Collections2.transform(collection, typeSafeCast(klazz));
     }
 
     public static <T> Iterator<T> typeSafeCaptureOfIterator(final Enumeration<? extends T> enumeration) {

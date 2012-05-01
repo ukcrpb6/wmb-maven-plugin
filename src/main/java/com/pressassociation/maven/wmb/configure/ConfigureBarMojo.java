@@ -2,19 +2,17 @@ package com.pressassociation.maven.wmb.configure;
 
 import nu.xom.ParsingException;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectHelper;
-import org.jfrog.maven.annomojo.annotations.*;
+import org.jfrog.maven.annomojo.annotations.MojoGoal;
+import org.jfrog.maven.annomojo.annotations.MojoParameter;
+import org.jfrog.maven.annomojo.annotations.MojoRequiresDependencyResolution;
+import org.jfrog.maven.annomojo.annotations.MojoThreadSafe;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Properties;
 
-import static com.pressassociation.maven.wmb.configure.TypeSafetyHelper.*;
+import static com.pressassociation.maven.wmb.configure.TypeSafetyHelper.typeSafeSet;
 
 /**
  * @author Bob Browning <bob.browning@pressassociation.com>
@@ -22,42 +20,13 @@ import static com.pressassociation.maven.wmb.configure.TypeSafetyHelper.*;
 @MojoRequiresDependencyResolution("runtime")
 @MojoGoal("configure")
 @MojoThreadSafe
-public class ConfigureBarMojo extends AbstractMojo { //implements Contextualizable
-
-    @MojoParameter(expression = "${project}", required = true, readonly = true)
-    private MavenProject project;
-
-    @MojoComponent(role = "com.pressassociation.maven.wmb.configure.BarConfigurator", roleHint = "default")
-    private BarConfigurator barConfigurator;
-
-    @MojoComponent
-    private MavenProjectHelper projectHelper;
+public class ConfigureBarMojo extends AbstractConfigureBarMojo {
 
     @MojoParameter(defaultValue = "${project.build.directory}")
     private File outputDirectory;
 
-    @MojoParameter(readonly = true)
-    private File propertiesFile;
-
-    @MojoParameter
-    private Properties properties;
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (propertiesFile != null) {
-            properties = new Properties();
-            try {
-                properties.load(new FileInputStream(propertiesFile));
-            } catch (IOException e) {
-                throw propagate(e);
-            }
-        }
-
-        if (properties == null) {
-            properties = new Properties();
-            getLog().warn("No properties or properiesFile found in configuration, no changes will be made to the broker archives.");
-        }
-
         for (Artifact artifact : typeSafeSet(project.getArtifacts(), Artifact.class)) {
             if (!"bar".equals(artifact.getType())) {
                 getLog().info("Skipping " + artifact.getType() + " dependency " + artifact.getId() +
@@ -79,7 +48,7 @@ public class ConfigureBarMojo extends AbstractMojo { //implements Contextualizab
                 }
 
                 if (targetFile.createNewFile()) {
-                    barConfigurator.configure(artifact, targetFile, properties);
+                    barConfigurator.configure(artifact, targetFile, getProperties());
                     projectHelper.attachArtifact(project, artifact.getType(), artifact.getClassifier(), targetFile);
                 } else {
                     throw new MojoExecutionException("Failed to create target file.");
@@ -100,11 +69,6 @@ public class ConfigureBarMojo extends AbstractMojo { //implements Contextualizab
         return new File(outputDirectory, name);
     }
 
-    private static MojoExecutionException propagate(Throwable throwable) {
-        if (throwable instanceof MojoExecutionException) {
-            return (MojoExecutionException) throwable;
-        }
-        return new MojoExecutionException(throwable.getMessage(), throwable);
-    }
+
 
 }

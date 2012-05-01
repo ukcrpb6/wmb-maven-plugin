@@ -4,9 +4,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import nu.xom.*;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
 import org.codehaus.plexus.util.IOUtil;
 
@@ -30,9 +28,6 @@ import static com.pressassociation.maven.wmb.configure.TypeSafetyHelper.typeSafe
 public class DefaultBarConfigurator extends AbstractLogEnabled implements BarConfigurator {
 
     private static final String BROKER_XML_ENTRY = "META-INF/broker.xml";
-
-    @Requirement
-    private ArtifactResolver artifactResolver;
 
     @Override
     public Artifact configure(Artifact sourceArtifact, File targetArtifactFile, Properties properties) throws IOException, ParsingException {
@@ -72,6 +67,41 @@ public class DefaultBarConfigurator extends AbstractLogEnabled implements BarCon
             IOUtil.close(zos);
         }
         return sourceArtifact;
+    }
+
+    @Override
+    public Map<String, String> resolveProperties(Artifact artifact) throws IOException, ParsingException {
+        final BarFile file = new BarFile(artifact.getFile());
+        getLogger().info("Resolving " + artifact);
+
+        for (ZipEntry entry : typeSafeCaptureOfIterable(file.entries())) {
+            if (!entry.isDirectory()) {
+                InputStream is = file.getInputStream(entry);
+                try {
+                    String name = entry.getName();
+                    if (BROKER_XML_ENTRY.equals(name)) {
+                        return extractProperties(is);
+                    }
+                } finally {
+                    IOUtil.close(is);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public Map<String, String> extractProperties(InputStream inputStream) throws IOException, ParsingException {
+        Nodes nodes = new Builder().build(checkNotNull(inputStream)).query("//ConfigurableProperty");
+
+//        ImmutableMap.Builder<String, String> map = ImmutableMap.builder();
+        Map<String, String> map = Maps.newHashMap();
+        for (Element e : new ElementIterable(nodes)) {
+            final String uri = e.getAttributeValue("uri");
+            final Attribute override = e.getAttribute("override");
+            map.put(uri, override == null ? null : override.getValue());
+        }
+        return map; //.build();
     }
 
     public void addTransformBrokerXml(Set<String> resources, ZipOutputStream zos, String name, InputStream is,

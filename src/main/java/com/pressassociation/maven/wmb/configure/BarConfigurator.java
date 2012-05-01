@@ -6,6 +6,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -25,4 +26,6 @@ public interface BarConfigurator {
      */
     Artifact configure(Artifact sourceArtifact, File targetArtifactFile, Properties properties)
             throws IOException, MojoExecutionException, ParsingException;
+
+    Map<String, String> resolveProperties(Artifact artifact) throws IOException, ParsingException;
 }
