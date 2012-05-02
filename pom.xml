@@ -81,7 +81,7 @@
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
-            <artifactId>dhbcore</artifactId>
+            <artifactId>com.ibm.mq.pcf</artifactId>
             <version>${ibm.mq.version}</version>
         </dependency>
         <dependency>
@@ -91,10 +91,14 @@
         </dependency>
         <dependency>
             <groupId>com.ibm</groupId>
+            <artifactId>com.ibm.mq</artifactId>
+            <version>${ibm.mq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ibm</groupId>
             <artifactId>com.ibm.mq.jmqi</artifactId>
             <version>${ibm.mq.version}</version>
         </dependency>
-
 
         <!-- Maven Utility Dependencies -->
         <dependency>
@@ -119,6 +123,7 @@
             <groupId>org.jfrog.maven.annomojo</groupId>
             <artifactId>maven-plugin-anno</artifactId>
             <version>1.4.1</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Other -->
@@ -127,6 +132,12 @@
             <artifactId>guava</artifactId>
             <version>12.0-rc1</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>3.0</version>
+        </dependency>
+
 
         <!-- Testing Dependencies -->
         <dependency>
