@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.mojo;
 
 import nu.xom.ParsingException;
 import org.apache.maven.artifact.Artifact;
@@ -12,7 +12,7 @@ import org.jfrog.maven.annomojo.annotations.MojoThreadSafe;
 import java.io.File;
 import java.io.IOException;
 
-import static com.pressassociation.maven.wmb.configure.TypeSafetyHelper.typeSafeSet;
+import static com.pressassociation.maven.wmb.utils.TypeSafetyHelper.typeSafeSet;
 
 /**
  * @author Bob Browning <bob.browning@pressassociation.com>

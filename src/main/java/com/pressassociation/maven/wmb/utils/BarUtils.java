@@ -1,5 +1,6 @@
-package com.pressassociation.maven.wmb;
+package com.pressassociation.maven.wmb.utils;
 
+import com.pressassociation.maven.wmb.types.BrokerArchive;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.StringUtils;
 

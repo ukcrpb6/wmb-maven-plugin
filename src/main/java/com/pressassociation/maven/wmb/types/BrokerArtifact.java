@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb;
+package com.pressassociation.maven.wmb.types;
 
 import com.google.common.base.Objects;
 import org.apache.maven.artifact.factory.ArtifactFactory;

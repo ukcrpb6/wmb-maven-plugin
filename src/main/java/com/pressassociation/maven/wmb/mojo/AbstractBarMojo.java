@@ -1,5 +1,6 @@
-package com.pressassociation.maven.wmb;
+package com.pressassociation.maven.wmb.mojo;
 
+import com.pressassociation.maven.wmb.types.BrokerArchive;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.shared.model.fileset.util.FileSetManager;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;

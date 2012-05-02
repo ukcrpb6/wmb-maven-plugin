@@ -1,7 +1,8 @@
-package com.pressassociation.maven.wmb;
+package com.pressassociation.maven.wmb.mojo;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
+import com.pressassociation.maven.wmb.types.BrokerArchive;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.plexus.util.FileUtils;

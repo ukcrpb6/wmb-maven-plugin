@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.types;
 
 import java.util.Set;
 

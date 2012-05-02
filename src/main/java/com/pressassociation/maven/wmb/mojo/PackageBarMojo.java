@@ -1,8 +1,11 @@
 /**
  * Copyright (c) 2011, The Press Association.
  */
-package com.pressassociation.maven.wmb;
+package com.pressassociation.maven.wmb.mojo;
 
+import com.pressassociation.maven.wmb.utils.BarUtils;
+import com.pressassociation.maven.wmb.types.BrokerArchive;
+import com.pressassociation.maven.wmb.Types;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;

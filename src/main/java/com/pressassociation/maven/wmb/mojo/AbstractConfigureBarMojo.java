@@ -1,5 +1,6 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.mojo;
 
+import com.pressassociation.maven.wmb.configurator.BarConfigurator;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -22,7 +23,7 @@ public abstract class AbstractConfigureBarMojo extends AbstractMojo {
     @MojoParameter(expression = "${project}", required = true, readonly = true)
     protected MavenProject project;
 
-    @MojoComponent(role = "com.pressassociation.maven.wmb.configure.BarConfigurator", roleHint = "default")
+    @MojoComponent(role = "com.pressassociation.maven.wmb.configurator.BarConfigurator", roleHint = "default")
     protected BarConfigurator barConfigurator;
 
     @MojoComponent

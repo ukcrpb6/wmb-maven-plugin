@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.configurator;
 
 import nu.xom.ParsingException;
 import org.apache.maven.artifact.Artifact;
@@ -27,5 +27,13 @@ public interface BarConfigurator {
     Artifact configure(Artifact sourceArtifact, File targetArtifactFile, Properties properties)
             throws IOException, MojoExecutionException, ParsingException;
 
+    /**
+     * Extract properties from broker archive into a map.
+     *
+     * @param artifact Broker artifact to resolve entries from
+     * @return Map of configurable properties
+     * @throws IOException
+     * @throws ParsingException
+     */
     Map<String, String> resolveProperties(Artifact artifact) throws IOException, ParsingException;
 }

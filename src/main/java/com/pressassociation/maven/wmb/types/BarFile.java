@@ -1,8 +1,9 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.types;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.pressassociation.maven.wmb.utils.ElementIterable;
 import nu.xom.*;
 
 import java.io.File;

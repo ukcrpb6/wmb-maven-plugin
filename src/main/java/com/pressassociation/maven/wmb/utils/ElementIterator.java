@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.utils;
 
 import com.google.common.collect.AbstractIterator;
 import nu.xom.Element;

@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.mojo;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static com.pressassociation.maven.wmb.configure.TypeSafetyHelper.typeSafeSet;
+import static com.pressassociation.maven.wmb.utils.TypeSafetyHelper.typeSafeSet;
 
 /**
  * @author Bob Browning <bob.browning@pressassociation.com>

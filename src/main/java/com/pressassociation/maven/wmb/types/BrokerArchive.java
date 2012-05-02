@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2009, The Press Association.
  */
-package com.pressassociation.maven.wmb;
+package com.pressassociation.maven.wmb.types;
 
 import org.apache.maven.shared.model.fileset.FileSet;
 

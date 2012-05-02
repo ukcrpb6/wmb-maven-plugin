@@ -1,4 +1,4 @@
-package com.pressassociation.maven.wmb.configure;
+package com.pressassociation.maven.wmb.mojo;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -7,10 +7,10 @@ import org.jfrog.maven.annomojo.annotations.MojoGoal;
 /**
 * @author Bob Browning <bob.browning@pressassociation.com>
 */
-@MojoGoal("analyze-overridden")
-public class OverriddenAnalyzeConfigurationBarMojo extends AbstractAnalyzeConfigurationBarMojo {
+@MojoGoal("analyze-missing")
+public class MissingAnalyzeConfigurationBarMojo extends AbstractAnalyzeConfigurationBarMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        super.execute(Mode.OVERRIDDEN);
+        super.execute(Mode.MISSING);
     }
 }

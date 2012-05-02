@@ -29,9 +29,9 @@
             </configuration>
         </component>
         <component>
-            <role>com.pressassociation.maven.wmb.configure.BarConfigurator</role>
+            <role>com.pressassociation.maven.wmb.configurator.BarConfigurator</role>
             <role-hint>default</role-hint>
-            <implementation>com.pressassociation.maven.wmb.configure.DefaultBarConfigurator</implementation>
+            <implementation>com.pressassociation.maven.wmb.configurator.DefaultBarConfigurator</implementation>
         </component>
     </components>
 </component-set>
