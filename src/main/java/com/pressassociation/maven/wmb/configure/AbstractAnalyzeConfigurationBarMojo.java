@@ -52,9 +52,13 @@ public abstract class AbstractAnalyzeConfigurationBarMojo extends AbstractConfig
         MapDifference<String, String> difference = Maps.difference(barProperties, pomProperties);
 
         if (mode == Mode.OVERRIDDEN && !difference.entriesInCommon().isEmpty()) {
-            getLog().info("\n\t\t\t ----- Overridden properties ----- \n");
+            getLog().info("\n\t\t\t ----- Overridden properties (same) ----- \n");
             for (Map.Entry<String, String> entry : difference.entriesInCommon().entrySet()) {
-                getLog().info(entry.getKey() + " = " + entry.getValue());
+                getLog().info(entry.getKey() + " -> " + entry.getValue());
+            }
+            getLog().info("\n\t\t\t ----- Overridden properties (differing) ----- \n");
+            for (Map.Entry<String, MapDifference.ValueDifference<String>> entry : difference.entriesDiffering().entrySet()) {
+                getLog().info(entry.getKey() + " -> " + entry.getValue().rightValue());
             }
         }
 
@@ -76,7 +80,7 @@ public abstract class AbstractAnalyzeConfigurationBarMojo extends AbstractConfig
             if (mode == Mode.INHERITED && !warningList.isEmpty()) {
                 getLog().info("\n\t\t\t ----- Inherited properties ----- \n");
                 for (Map.Entry<String, String> entry : warningList) {
-                    getLog().info(entry.getKey() + " = " + entry.getValue());
+                    getLog().info(entry.getKey() + " -> " + entry.getValue());
                 }
             }
         }
