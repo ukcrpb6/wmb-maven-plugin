@@ -3,7 +3,7 @@
 
     <groupId>com.pressassociation.maven</groupId>
     <artifactId>wmb-maven-plugin</artifactId>
-    <version>1.5.1</version>
+    <version>1.6-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Websphere Message Broker Archive Plugin</name>
