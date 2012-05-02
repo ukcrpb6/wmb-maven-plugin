@@ -18,6 +18,7 @@ import org.jfrog.maven.annomojo.annotations.MojoRequiresDependencyResolution;
 
 import javax.inject.Provider;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -128,8 +129,11 @@ public class ConfiguredDeployMojo extends AbstractMojo {
                 ExecutionGroupProxy executionGroupProxy = proxy.getExecutionGroupByName(artifact.getExecutionGroup());
                 DeployResult deployResult = executionGroupProxy.deploy(artifact.getFile().getPath(), true, BROKER_TIMEOUT);
                 if(deployResult.getCompletionCode() != CompletionCodeType.success) {
-                    throw new MojoExecutionException("Error deploying broker archive, " +
-                            deployResult.getCompletionCode().toString());
+                    Enumeration<LogEntry> responses = deployResult.getDeployResponses();
+                    while(responses.hasMoreElements()) {
+                        getLog().error(responses.nextElement().getDetail());
+                    }
+                    throw new MojoExecutionException("Error deploying broker archive.");
                 }
             } catch (ConfigManagerProxyPropertyNotInitializedException e) {
                 throw propagateMojoExecutionException(e);
