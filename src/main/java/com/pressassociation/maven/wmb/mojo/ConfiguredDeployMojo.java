@@ -28,7 +28,7 @@ import java.util.List;
 @MojoRequiresDependencyResolution
 public class ConfiguredDeployMojo extends AbstractMojo {
 
-    private static final int BROKER_TIMEOUT = 30000;
+    private static final int BROKER_TIMEOUT = 300000;
 
     /**
      * Set of deployable artifacts.
@@ -89,9 +89,10 @@ public class ConfiguredDeployMojo extends AbstractMojo {
      */
     private Provider<MQBrokerConnectionParameters> connectionParameters = new Provider<MQBrokerConnectionParameters>() {
         MQBrokerConnectionParameters parameters;
+
         @Override
         public MQBrokerConnectionParameters get() {
-            if(parameters == null) {
+            if (parameters == null) {
                 parameters = new MQBrokerConnectionParameters(hostname, port, queueMgr);
             }
             return parameters;
@@ -107,10 +108,15 @@ public class ConfiguredDeployMojo extends AbstractMojo {
             throw propagateMojoExecutionException(e);
         }
 
-        for(BrokerArtifact artifact : artifacts) {
+        for (BrokerArtifact artifact : artifacts) {
+            /* Broker artifacts should always be attached artifacts */
+            artifact.setGroupId(project.getGroupId());
+            artifact.setArtifactId(project.getArtifactId());
+            artifact.setVersion(project.getVersion());
+
             artifact.setArtifactFactory(artifactFactory);
 
-            if(artifact.getExecutionGroup() == null) {
+            if (artifact.getExecutionGroup() == null) {
                 throw new MojoExecutionException("Missing required execution group value for artifact " + artifact);
             }
 
@@ -128,9 +134,9 @@ public class ConfiguredDeployMojo extends AbstractMojo {
             try {
                 ExecutionGroupProxy executionGroupProxy = proxy.getExecutionGroupByName(artifact.getExecutionGroup());
                 DeployResult deployResult = executionGroupProxy.deploy(artifact.getFile().getPath(), true, BROKER_TIMEOUT);
-                if(deployResult.getCompletionCode() != CompletionCodeType.success) {
+                if (deployResult.getCompletionCode() != CompletionCodeType.success) {
                     Enumeration<LogEntry> responses = deployResult.getDeployResponses();
-                    while(responses.hasMoreElements()) {
+                    while (responses.hasMoreElements()) {
                         getLog().error(responses.nextElement().getDetail());
                     }
                     throw new MojoExecutionException("Error deploying broker archive.");
@@ -152,7 +158,7 @@ public class ConfiguredDeployMojo extends AbstractMojo {
      * @return MojoExecutionException instance wrapping t.
      */
     private static MojoExecutionException propagateMojoExecutionException(Throwable t) {
-        if(t instanceof MojoExecutionException) {
+        if (t instanceof MojoExecutionException) {
             return (MojoExecutionException) t;
         }
         return new MojoExecutionException(t.getMessage(), t);

@@ -1,6 +1,7 @@
 package com.pressassociation.maven.wmb.types;
 
 import com.google.common.base.Objects;
+import com.pressassociation.maven.wmb.Types;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 
 /**
@@ -14,7 +15,7 @@ public class BrokerArtifact extends ForwardingArtifact {
 
     private String version;
 
-    private String type;
+    private String type = Types.BROKER_ARCHIVE_TYPE;
 
     private String classifier;
 
