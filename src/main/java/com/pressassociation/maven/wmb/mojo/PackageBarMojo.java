@@ -3,9 +3,9 @@
  */
 package com.pressassociation.maven.wmb.mojo;
 
-import com.pressassociation.maven.wmb.utils.BarUtils;
-import com.pressassociation.maven.wmb.types.BrokerArchive;
 import com.pressassociation.maven.wmb.Types;
+import com.pressassociation.maven.wmb.types.BrokerArchive;
+import com.pressassociation.maven.wmb.utils.BarUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
@@ -14,7 +14,6 @@ import org.apache.maven.shared.model.fileset.FileSet;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.jfrog.maven.annomojo.annotations.MojoComponent;
-import org.jfrog.maven.annomojo.annotations.MojoExecute;
 import org.jfrog.maven.annomojo.annotations.MojoGoal;
 import org.jfrog.maven.annomojo.annotations.MojoParameter;
 
@@ -32,7 +31,6 @@ import java.util.List;
  * @author Bob Browning
  */
 @MojoGoal("package")
-@MojoExecute(goal = "process-resources")
 public final class PackageBarMojo extends AbstractBarMojo {
 
     @MojoParameter(required = true, expression = "${project}", readonly = true)
