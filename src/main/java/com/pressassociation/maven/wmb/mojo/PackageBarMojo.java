@@ -5,12 +5,14 @@ package com.pressassociation.maven.wmb.mojo;
 
 import com.pressassociation.maven.wmb.Types;
 import com.pressassociation.maven.wmb.types.BrokerArchive;
-import com.pressassociation.maven.wmb.utils.BarUtils;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.shared.model.fileset.FileSet;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.jfrog.maven.annomojo.annotations.MojoComponent;
@@ -33,17 +35,68 @@ import java.util.List;
 @MojoGoal("package")
 public final class PackageBarMojo extends AbstractBarMojo {
 
-    @MojoParameter(required = true, expression = "${project}", readonly = true)
+    /**
+     * Maven Toolchain Manager
+     */
+    @MojoComponent
+    private ToolchainManager toolchainManager;
+
+    /**
+     * Maven Session
+     */
+    @MojoParameter(expression = "${session}", readonly = true, required = true)
+    private MavenSession session;
+
+    /**
+     * Maven Project
+     */
+    @MojoParameter(expression = "${project}", readonly = true, required = true)
     private MavenProject project;
 
+    @MojoParameter(expression = "wmb.skipWSErrorCheck", defaultValue = "false", readonly = true)
+    private boolean skipWSErrorCheck;
+
+    @MojoParameter(expression = "wmb.cleanBuild", defaultValue = "false", readonly = true)
+    private boolean cleanBuild;
+
+    /**
+     * Maven Project Helper
+     */
     @MojoComponent
     private MavenProjectHelper projectHelper;
 
+    @MojoParameter(expression = "${wmb.compiler.compilerId}", defaultValue = "mqsicreatebar")
+    private String compilerId;
+
+    /**
+     * Full path to mqsicreatebar command.
+     */
+    @MojoParameter(defaultValue = "/opt/IBM/WMBT800", expression = "${wmb.toolkitDirectory}")
+    private File toolkitDirectory;
+
     private File _mqsicreatebar;
+
+    private Toolchain getToolchain() {
+        if (toolchainManager != null) {
+            return toolchainManager.getToolchainFromBuildContext("mqsitoolkit", session);
+        }
+        return null;
+    }
 
     private File getMQSICreateBar() throws MojoExecutionException {
         if (_mqsicreatebar == null) {
-            _mqsicreatebar = new File(toolkitDirectory, "mqsicreatebar");
+            Toolchain tc = getToolchain();
+            if (tc != null) {
+                getLog().info("Toolchain in wmb-maven-plugin: " + tc);
+                _mqsicreatebar = new File(tc.findTool(compilerId));
+            }
+
+            if (_mqsicreatebar != null) {
+                toolkitDirectory = _mqsicreatebar.getParentFile();
+            } else {
+                _mqsicreatebar = new File(toolkitDirectory, compilerId);
+            }
+
             if (!_mqsicreatebar.exists()) {
                 throw new MojoExecutionException(String.format("Invalid toolkit directory (%s), cannot locate mqsicreatebar.", toolkitDirectory));
             }
@@ -77,25 +130,23 @@ public final class PackageBarMojo extends AbstractBarMojo {
         }
 
         for (BrokerArchive archive : brokerArchives) {
-            FileSet flowFileSet = archive.getFlows();
-            if (flowFileSet.getDirectory() == null) {
-                flowFileSet.setDirectory(basedir);
+            if (!archive.isFilenameProvided()) {
+                throw new MojoFailureException("Require archive filename");
             }
 
-            String[] includedFiles = fileSetManager.getIncludedFiles(flowFileSet);
-            for (int i = 0; i < includedFiles.length; i++) {
-                includedFiles[i] = FileUtils.catPath(flowFileSet.getDirectory(), includedFiles[i]);
-            }
-
-            if (archive.isFilenameProvided()) {
-                process(archive.getClassifier(), includedFiles, archive.getProjects());
-            } else {
-                for (String filename : includedFiles) {
-                    process(BarUtils.createIndividualBarClassifier(archive, filename),
-                            new String[]{filename}, archive.getProjects());
-                }
-            }
+            process(archive);
         }
+    }
+
+    private String[] resolveIncludedFiles(FileSet flowFileSet) {
+        if (flowFileSet.getDirectory() == null) {
+            flowFileSet.setDirectory(basedir);
+        }
+        String[] includedFiles = fileSetManager.getIncludedFiles(flowFileSet);
+        for (int i = 0; i < includedFiles.length; i++) {
+            includedFiles[i] = FileUtils.catPath(flowFileSet.getDirectory(), includedFiles[i]);
+        }
+        return includedFiles;
     }
 
     /**
@@ -109,61 +160,39 @@ public final class PackageBarMojo extends AbstractBarMojo {
      * best practice for using mqsicreatebar, which runs a headless instance
      * of Eclipse each time it is invoked.
      *
-     * @param classifier
-     * @param artifacts
-     * @param projects
+     * @param archive
      * @throws MojoExecutionException
      */
-    private void process(String classifier, String[] artifacts, String[] projects) throws MojoExecutionException {
+    private void process(BrokerArchive archive) throws MojoExecutionException {
+        final String artifactFilename = project.getArtifactId() +
+                "-" + project.getVersion() + "-" + archive.getClassifier()+ Types.BROKER_ARCHIVE_EXTENSION;
 
-        StringBuilder artifactFilename = new StringBuilder();
-        artifactFilename.append(project.getArtifactId())
-                .append("-")
-                .append(project.getVersion())
-                .append("-").append(classifier)
-                .append(Types.BROKER_ARCHIVE_EXTENSION);
-        File barArchive = new File(targetdir, artifactFilename.toString());
+        File targetBarFile = new File(targetdir, artifactFilename);
 
-        List<String> cmdlist = new ArrayList<String>();
-        cmdlist.add(getMQSICreateBar().getAbsolutePath());
-        cmdlist.add("-data");
-        cmdlist.add(generatedSourcesDir);
-        cmdlist.add("-b");
-        cmdlist.add(barArchive.getAbsolutePath());
-        cmdlist.add("-cleanBuild");
-        cmdlist.add("-o");
-
-        Collections.addAll(cmdlist, artifacts);
-
-        if (projects != null && projects.length > 0) {
-            cmdlist.add("-p");
-            Collections.addAll(cmdlist, projects);
-        }
-
-        ProcessBuilder pb = new ProcessBuilder(cmdlist);
+        ProcessBuilder pb = new ProcessBuilder(buildCommand(archive, targetBarFile));
         pb.directory(new File(generatedSourcesDir));
 
         // Run the build command.
         try {
             getLog().info("Building artifact " + artifactFilename + ", this may take a few moments.");
             getLog().debug(pb.toString());
-        
+
             Process proc = pb.start();
             try {
                 proc.waitFor();
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     String s;
-                    while((s = bufferedReader.readLine()) != null) {
+                    while ((s = bufferedReader.readLine()) != null) {
                         getLog().info(s.trim());
                     }
-                    
+
                     getLog().debug("mqsicreatebar returned exit code " + proc.exitValue());
                     if (proc.exitValue() > 0) {
                         throw new MojoExecutionException(IOUtil.toString(proc.getErrorStream()));
                     }
                 } catch (IOException e) {
-                    throw new MojoExecutionException("Error trying to output process input stream");
+                    throw new MojoExecutionException("Error trying to output process input stream", e);
                 }
             } catch (InterruptedException e) {
                 throw new MojoExecutionException("Error waiting for mqsicreatebar.", e);
@@ -176,6 +205,48 @@ public final class PackageBarMojo extends AbstractBarMojo {
             throw new MojoExecutionException("Error running mqsicreatebar command.", e);
         }
 
-        projectHelper.attachArtifact(project, Types.BROKER_ARCHIVE_TYPE, classifier, barArchive);
+        projectHelper.attachArtifact(project, Types.BROKER_ARCHIVE_TYPE, archive.getClassifier(), targetBarFile);
+    }
+
+    private List<String> buildCommand(BrokerArchive archive, File targetBarFile) throws MojoExecutionException {
+        List<String> cmdlist = new ArrayList<String>();
+        cmdlist.add(getMQSICreateBar().getAbsolutePath());
+        cmdlist.add("-data");
+        cmdlist.add(generatedSourcesDir);
+        cmdlist.add("-b");
+        cmdlist.add(targetBarFile.getAbsolutePath());
+
+        if (archive.getDeployableFiles() != null) {
+            cmdlist.add("-o");
+            Collections.addAll(cmdlist, resolveIncludedFiles(archive.getDeployableFiles()));
+        }
+
+        if (archive.getProjects() != null && archive.getProjects().length > 0) {
+            cmdlist.add("-p");
+            Collections.addAll(cmdlist, archive.getProjects());
+        }
+
+        if (archive.getApplications() != null && archive.getApplications().length > 0) {
+            cmdlist.add("-a");
+            Collections.addAll(cmdlist, archive.getApplications());
+        }
+
+        if (archive.getLibraries() != null && archive.getLibraries().length > 0) {
+            cmdlist.add("-l");
+            Collections.addAll(cmdlist, archive.getLibraries());
+        }
+
+        cmdlist.add("-version");
+        cmdlist.add(project.getVersion());
+
+        if (skipWSErrorCheck) {
+            cmdlist.add("-skipWSErrorCheck");
+        }
+
+        if (cleanBuild) {
+            cmdlist.add("-cleanBuild");
+        }
+
+        return cmdlist;
     }
 }

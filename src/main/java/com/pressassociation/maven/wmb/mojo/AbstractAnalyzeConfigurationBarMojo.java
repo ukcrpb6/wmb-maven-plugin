@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.pressassociation.maven.wmb.utils.MojoUtils.propagateMojoExecutionException;
 import static com.pressassociation.maven.wmb.utils.TypeSafetyHelper.typeSafeSet;
 
 /**
@@ -37,9 +38,9 @@ public abstract class AbstractAnalyzeConfigurationBarMojo extends AbstractConfig
             try {
                 barProperties.putAll(barConfigurator.resolveProperties(artifact));
             } catch (ParsingException e) {
-                throw propagate(e);
+                throw propagateMojoExecutionException(e);
             } catch (IOException e) {
-                throw propagate(e);
+                throw propagateMojoExecutionException(e);
             }
         }
 

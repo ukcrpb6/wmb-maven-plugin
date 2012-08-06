@@ -32,7 +32,10 @@ public class PrepareSourcesMojo extends AbstractBarMojo {
         /* Compose distinct set of projects */
         Set<String> projects = Sets.newHashSet();
         while (it.hasNext()) {
-            Collections.addAll(projects, it.next().getProjects());
+            BrokerArchive archive = it.next();
+            Collections.addAll(projects, archive.getProjects());
+            Collections.addAll(projects, archive.getLibraries());
+            Collections.addAll(projects, archive.getApplications());
         }
 
         for (String project : projects) {
@@ -43,7 +46,7 @@ public class PrepareSourcesMojo extends AbstractBarMojo {
             }
 
             try {
-                FileUtils.copyDirectoryStructure(rootFile, new File(generatedSourcesDir, rootFile.getName()));
+                FileUtils.copyDirectoryStructureIfModified(rootFile, new File(generatedSourcesDir, rootFile.getName()));
             } catch (IOException e) {
                 throw new MojoExecutionException(e.getMessage(), e);
             }

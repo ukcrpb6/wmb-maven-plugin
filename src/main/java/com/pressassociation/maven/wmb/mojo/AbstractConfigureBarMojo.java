@@ -14,6 +14,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import static com.pressassociation.maven.wmb.utils.MojoUtils.propagateMojoExecutionException;
+
 /**
  * @author Bob Browning <bob.browning@pressassociation.com>
  */
@@ -41,7 +43,7 @@ public abstract class AbstractConfigureBarMojo extends AbstractMojo {
             try {
                 properties.load(new FileInputStream(propertiesFile));
             } catch (IOException e) {
-                throw propagate(e);
+                throw propagateMojoExecutionException(e);
             }
         }
 
@@ -52,10 +54,4 @@ public abstract class AbstractConfigureBarMojo extends AbstractMojo {
         return properties;
     }
 
-    protected static MojoExecutionException propagate(Throwable throwable) {
-        if (throwable instanceof MojoExecutionException) {
-            return (MojoExecutionException) throwable;
-        }
-        return new MojoExecutionException(throwable.getMessage(), throwable);
-    }
 }

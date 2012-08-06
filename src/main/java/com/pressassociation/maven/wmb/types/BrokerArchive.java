@@ -22,6 +22,16 @@ public class BrokerArchive {
      */
     private String prefix = "";
 
+    /**
+     * List of dependent projects for the artifacts.
+     */
+    private String[] applications;
+
+    /**
+     * List of dependent projects for the artifacts.
+     */
+    private String[] libraries;
+
 	/**
 	 * List of dependent projects for the artifacts.
 	 */
@@ -30,7 +40,7 @@ public class BrokerArchive {
     /**
      * Fileset of flows
      */
-    private FileSet flows;
+    private FileSet deployableFiles;
 
 	/**
 	 * Execution Group to which this BAR file should be deployed.
@@ -98,11 +108,27 @@ public class BrokerArchive {
         this.prefix = prefix;
     }
 
-    public FileSet getFlows() {
-        return flows;
+    public FileSet getDeployableFiles() {
+        return deployableFiles;
     }
 
-    public void setFlows(FileSet flows) {
-        this.flows = flows;
+    public void setDeployableFiles(FileSet deployableFiles) {
+        this.deployableFiles = deployableFiles;
+    }
+
+    public String[] getApplications() {
+        return applications;
+    }
+
+    public void setApplications(String[] applications) {
+        this.applications = applications;
+    }
+
+    public String[] getLibraries() {
+        return libraries;
+    }
+
+    public void setLibraries(String[] libraries) {
+        this.libraries = libraries;
     }
 }

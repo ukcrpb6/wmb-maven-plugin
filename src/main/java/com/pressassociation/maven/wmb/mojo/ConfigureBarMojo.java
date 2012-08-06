@@ -12,6 +12,7 @@ import org.jfrog.maven.annomojo.annotations.MojoThreadSafe;
 import java.io.File;
 import java.io.IOException;
 
+import static com.pressassociation.maven.wmb.utils.MojoUtils.propagateMojoExecutionException;
 import static com.pressassociation.maven.wmb.utils.TypeSafetyHelper.typeSafeSet;
 
 /**
@@ -54,9 +55,9 @@ public class ConfigureBarMojo extends AbstractConfigureBarMojo {
                     throw new MojoExecutionException("Failed to create target file.");
                 }
             } catch (ParsingException e) {
-                throw propagate(e);
+                throw propagateMojoExecutionException(e);
             } catch (IOException e) {
-                throw propagate(e);
+                throw propagateMojoExecutionException(e);
             }
         }
     }
@@ -68,7 +69,5 @@ public class ConfigureBarMojo extends AbstractConfigureBarMojo {
                 artifact.getArtifactHandler().getExtension();
         return new File(outputDirectory, name);
     }
-
-
 
 }
