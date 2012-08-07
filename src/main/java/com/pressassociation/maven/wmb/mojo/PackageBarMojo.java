@@ -56,7 +56,7 @@ public final class PackageBarMojo extends AbstractBarMojo {
     @MojoParameter(expression = "wmb.skipWSErrorCheck", defaultValue = "false", readonly = true)
     private boolean skipWSErrorCheck;
 
-    @MojoParameter(expression = "wmb.cleanBuild", defaultValue = "false", readonly = true)
+    @MojoParameter(expression = "wmb.cleanBuild", defaultValue = "true", readonly = true)
     private boolean cleanBuild;
 
     /**

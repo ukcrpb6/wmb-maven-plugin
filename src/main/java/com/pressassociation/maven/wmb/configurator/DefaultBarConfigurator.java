@@ -2,6 +2,9 @@ package com.pressassociation.maven.wmb.configurator;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.OutputSupplier;
 import com.pressassociation.maven.wmb.types.BarFile;
 import com.pressassociation.maven.wmb.utils.ElementIterable;
 import nu.xom.*;
@@ -10,10 +13,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
 import org.codehaus.plexus.util.IOUtil;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -33,64 +33,123 @@ public class DefaultBarConfigurator extends AbstractLogEnabled implements BarCon
     private static final String ATTR_URI = "uri";
     private static final String ATTR_OVERRIDE = "override";
     private static final String XPATH_CONFIGURABLE_PROPERTY = "//ConfigurableProperty";
+    private static final String EXT_LIBRARY = ".libzip";
+    private static final String EXT_APPLICATION = ".appzip";
 
     @Override
-    public Artifact configure(Artifact sourceArtifact, File targetArtifactFile, Properties properties) throws IOException, ParsingException {
+    public Artifact configure(Artifact sourceArtifact, final File targetArtifactFile, Properties properties) throws IOException, ParsingException {
         final BarFile file = new BarFile(sourceArtifact.getFile());
         getLogger().info("Configuring " + sourceArtifact);
 
-        Set<String> resources = Sets.newHashSet();
-        ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(targetArtifactFile));
+        repackArchive(file, createZipOutputStreamSupplier(targetArtifactFile), Sets.<String>newHashSet(), properties);
 
-        try {
-            for (ZipEntry entry : typeSafeCaptureOfIterable(file.entries())) {
-                if (!entry.isDirectory()) {
-                    InputStream is = file.getInputStream(entry);
-                    try {
-                        String name = entry.getName();
-                        int idx = name.lastIndexOf("/");
-                        if (idx != -1) {
-                            String dir = name.substring(0, idx);
-                            if (!resources.contains(dir)) {
-                                addDirectory(resources, zos, dir);
-                            }
-                        }
-                        if (resources.contains(name)) {
-                            continue;
-                        }
-                        if (!BROKER_XML_ENTRY.equals(name)) {
-                            addResource(resources, zos, name, is);
-                        } else {
-                            addTransformBrokerXml(resources, zos, is, Maps.fromProperties(properties));
-                        }
-                    } finally {
-                        IOUtil.close(is);
-                    }
-                }
-            }
-        } finally {
-            IOUtil.close(zos);
-        }
         return sourceArtifact;
     }
 
-    @Override
-    public Map<String, String> resolveProperties(Artifact artifact) throws IOException, ParsingException {
-        final BarFile file = new BarFile(artifact.getFile());
-        getLogger().info("Resolving " + artifact);
+    private OutputSupplier<ZipOutputStream> createZipOutputStreamSupplier(final File file) {
+        return new OutputSupplier<ZipOutputStream>() {
+            @Override public ZipOutputStream getOutput() throws IOException {
+                return new ZipOutputStream(new FileOutputStream(file));
+            }
+        };
+    }
 
+    private void repackArchive(BarFile file, OutputSupplier<ZipOutputStream> supplier, Set<String> resources, Properties properties) throws IOException, ParsingException {
+        ZipOutputStream zos = supplier.getOutput();
+        try {
+            repackArchive(file, zos, resources, properties);
+        } finally {
+            zos.close();
+        }
+    }
+
+    private void repackArchive(BarFile file, ZipOutputStream zos, Set<String> resources, Properties properties) throws IOException, ParsingException {
         for (ZipEntry entry : typeSafeCaptureOfIterable(file.entries())) {
-            if (!entry.isDirectory() && BROKER_XML_ENTRY.equals(entry.getName())) {
+            if (!entry.isDirectory()) {
                 InputStream is = file.getInputStream(entry);
                 try {
-                    return extractProperties(is);
+                    final String name = entry.getName();
+                    int idx = name.lastIndexOf("/");
+                    if (idx != -1) {
+                        String dir = name.substring(0, idx);
+                        if (!resources.contains(dir)) {
+                            addDirectory(resources, zos, dir);
+                        }
+                    }
+                    if (resources.contains(name)) {
+                        continue;
+                    }
+                    if (name.endsWith(EXT_LIBRARY) || name.endsWith(EXT_APPLICATION)) {
+                        File tmpFile = createTemporaryExtractedFile(name, is);
+                        final File tmpTargetFile = File.createTempFile("temp", name);
+                        try {
+                            repackArchive(new BarFile(tmpFile), createZipOutputStreamSupplier(tmpTargetFile), Sets.<String>newHashSet(), properties);
+                            zos.putNextEntry(new ZipEntry(name));
+                            ByteStreams.copy(new InputSupplier<InputStream>() {
+                                @Override public InputStream getInput() throws IOException {
+                                    return new FileInputStream(tmpTargetFile);
+                                }
+                            }, zos);
+                            resources.add(name);
+                        } finally {
+                            tmpFile.delete();
+                            tmpTargetFile.delete();
+                        }
+                    } else if (BROKER_XML_ENTRY.equals(name)) {
+                        addTransformBrokerXml(resources, zos, is, Maps.fromProperties(properties));
+                    } else {
+                        addResource(resources, zos, name, is);
+                    }
                 } finally {
                     IOUtil.close(is);
                 }
             }
         }
+    }
 
-        return null;
+    private File createTemporaryExtractedFile(String originalFilename, InputStream is) throws IOException {
+        final File tmpFile = File.createTempFile("zip", "-" + originalFilename);
+        ByteStreams.copy(is, new OutputSupplier<OutputStream>() {
+            @Override public OutputStream getOutput() throws IOException {
+                return new FileOutputStream(tmpFile);
+            }
+        });
+        return tmpFile;
+    }
+
+    @Override
+    public Map<String, String> resolveProperties(Artifact artifact) throws IOException, ParsingException {
+        getLogger().info("Resolving " + artifact);
+        return resolveProperties(new BarFile(artifact.getFile()));
+    }
+
+    private Map<String, String> resolveProperties(BarFile file) throws IOException, ParsingException {
+        getLogger().info("Resolving properties for " + file.getName());
+
+        Map<String, String> map = Maps.newHashMap();
+
+        for (ZipEntry entry : typeSafeCaptureOfIterable(file.entries())) {
+            if (!entry.isDirectory()) {
+                if (entry.getName().endsWith(EXT_LIBRARY) || entry.getName().endsWith(EXT_APPLICATION)) {
+                    File tmpFile = createTemporaryExtractedFile(entry.getName(), file.getInputStream(entry));
+                    try {
+                        map.putAll(resolveProperties(new BarFile(tmpFile)));
+                    } finally {
+                        tmpFile.delete();
+                    }
+                } else if (BROKER_XML_ENTRY.equals(entry.getName())) {
+                    InputStream is = file.getInputStream(entry);
+                    try {
+                        map.putAll(extractProperties(is));
+                        return map;
+                    } finally {
+                        IOUtil.close(is);
+                    }
+                }
+            }
+        }
+
+        return map;
     }
 
     /**
