@@ -1,5 +1,8 @@
 package com.pressassociation.maven.wmb.mojo;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import nu.xom.ParsingException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -11,6 +14,7 @@ import org.jfrog.maven.annomojo.annotations.MojoThreadSafe;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 import static com.pressassociation.maven.wmb.utils.MojoUtils.propagateMojoExecutionException;
 import static com.pressassociation.maven.wmb.utils.TypeSafetyHelper.typeSafeSet;
@@ -49,7 +53,8 @@ public class ConfigureBarMojo extends AbstractConfigureBarMojo {
                 }
 
                 if (targetFile.createNewFile()) {
-                    barConfigurator.configure(artifact, targetFile, getProperties());
+                    Properties props = applyPropertiesForClassifier(getProperties(), artifact.getClassifier());
+                    barConfigurator.configure(artifact, targetFile, props);
                     projectHelper.attachArtifact(project, artifact.getType(), artifact.getClassifier(), targetFile);
                 } else {
                     throw new MojoExecutionException("Failed to create target file.");
@@ -60,6 +65,32 @@ public class ConfigureBarMojo extends AbstractConfigureBarMojo {
                 throw propagateMojoExecutionException(e);
             }
         }
+    }
+
+    /**
+     * Properties can be stored using the format classifer1\:propertyName=propertyValue this allows properties to be
+     * specific for a given classified artifact.
+     *
+     * @param properties
+     * @param classifier
+     * @return
+     */
+    private Properties applyPropertiesForClassifier(Properties properties, final String classifier) {
+        Properties newProperties = new Properties();
+        newProperties.putAll(properties);
+        for (final String name : newProperties.stringPropertyNames()) {
+            if (name.contains(":")) {
+                final String[] parts = name.split(":", 2);
+                if (Iterables.any(Splitter.on(',').trimResults().omitEmptyStrings().split(parts[0]), new Predicate<String>() {
+                    @Override public boolean apply(String input) {
+                        return input.equalsIgnoreCase(classifier);
+                    }
+                })) {
+                    newProperties.setProperty(parts[1], newProperties.getProperty(name));
+                }
+            }
+        }
+        return newProperties;
     }
 
     private File artifactFileWithClassifier(final Artifact artifact) {
