@@ -100,6 +100,9 @@ public class ConfiguredDeployMojo extends AbstractDeployMojo {
 
             try {
                 ExecutionGroupProxy executionGroupProxy = proxy.getExecutionGroupByName(artifact.getExecutionGroup());
+                if(executionGroupProxy == null) {
+                    executionGroupProxy = proxy.createExecutionGroup(artifact.getExecutionGroup());
+                }
                 DeployResult deployResult = executionGroupProxy.deploy(artifact.getFile().getPath(), true, BROKER_TIMEOUT);
                 if (deployResult.getCompletionCode() != CompletionCodeType.success) {
                     Enumeration<LogEntry> responses = deployResult.getDeployResponses();

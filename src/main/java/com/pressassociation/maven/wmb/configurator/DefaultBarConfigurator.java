@@ -39,7 +39,7 @@ public class DefaultBarConfigurator extends AbstractLogEnabled implements BarCon
     @Override
     public Artifact configure(Artifact sourceArtifact, final File targetArtifactFile, Properties properties) throws IOException, ParsingException {
         final BarFile file = new BarFile(sourceArtifact.getFile());
-        getLogger().info("Configuring " + sourceArtifact);
+        getLogger().info("Configuring source artifact : " + sourceArtifact);
 
         repackArchive(file, createZipOutputStreamSupplier(targetArtifactFile), Sets.<String>newHashSet(), properties);
 
